@@ -22,8 +22,7 @@ const registercontroller =async (req, res) => {
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: "3h" });
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "none",
-      secure: process.env.NODE_ENV === "production",
+    
     });
 
     await newUser.save();
@@ -61,8 +60,7 @@ const logincontroller =async (req, res) => {
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "3h" });
         res.cookie("token", token, {
           httpOnly: true,
-          sameSite: "none",
-          secure: process.env.NODE_ENV === "production",
+        
         });
         res.status(200).json({
             user: {

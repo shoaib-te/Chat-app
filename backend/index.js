@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import morgan from "morgan";
 
 
 const app = express();
@@ -13,6 +14,7 @@ app.use(cors({
     origin: "http://localhost:5173",
     credentials: true,
 }));
+app.use(morgan("dev"));
 app.use(cookieParser());
 //* Connect to database */
 import connectDB from "./src/config/db.js";
