@@ -4,7 +4,7 @@ import Chatbox from '../components/Chatbox'
 
 function Home() {
   return (
-    <div className="min-h-screen flex">
+    <div className=" flex">
       <aside className="w-80 hidden md:block">
         <Sidebar />
       </aside>

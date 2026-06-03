@@ -69,9 +69,9 @@ function Chatbox() {
   };
 
   return (
-    <div className="flex flex-col h-full max-w-md mx-auto p-4 border rounded-box shadow-xl bg-base-100">
+    <div className="flex flex-col h-full w-full  ">
       {/* Chat Messages Container */}
-      <div ref={listRef} className="flex-1 overflow-y-auto mb-4 space-y-4" aria-live="polite">
+      <div ref={listRef} className="flex-1 flex flex-col overflow-y-auto mb-4 space-y-4" aria-live="polite">
         {messages.map((m) => (
           <div key={m.id} className={`chat ${m.side === "start" ? "chat-start" : "chat-end"}`}>
             <div className="chat-image avatar">
@@ -92,13 +92,13 @@ function Chatbox() {
       </div>
 
       {/* Chat Input Bar */}
-      <form onSubmit={sendMessage} className="join w-full" aria-label="Send message">
+      <form onSubmit={sendMessage} className="join justify-center items-center  w-2xl flex absolute bottom-3 gap-2" aria-label="Send message">
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
           type="text"
           placeholder="Type here"
-          className="input join-item"
+          className="input join-item w-3xl"
           aria-label="Message input"
         />
         <button type="submit" className="btn btn-primary join-item">

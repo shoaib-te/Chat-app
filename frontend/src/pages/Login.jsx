@@ -14,7 +14,7 @@ function Login() {
 
     try {
       await login({ email, password })
-      navigate('/profile')
+      navigate('/')
     } catch {
       // error handled in context
     }

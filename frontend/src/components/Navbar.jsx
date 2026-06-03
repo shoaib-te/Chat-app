@@ -2,9 +2,10 @@ import React, { useContext } from 'react'
 import { Link } from 'react-router-dom'
 import { IoChatbubbleEllipsesOutline } from 'react-icons/io5'
 import { AuthContext } from '../contexts/Auth.context';
+import { ThemeContext } from '../contexts/Theme.context.jsx';
 
-function Navbar({ theme, setTheme }) {
-  const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light')
+function Navbar() {
+  const { theme, toggleTheme } = useContext(ThemeContext) // Access theme context for toggling;
   
   // Destructure logout alongside user
   const { user, logout } = useContext(AuthContext) 
@@ -56,7 +57,7 @@ function Navbar({ theme, setTheme }) {
                 <Link to="/profile">Profile</Link>
               </li>
               <li>
-                <a>Settings</a>
+                <Link to="/settings">Settings</Link>
               </li>
               <li>
                 {/* Linked the context logout method here */}

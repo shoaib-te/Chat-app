@@ -38,7 +38,7 @@ function Sidebar() {
   };
 
   return (
-    <div className="h-screen w-full base-100 flex flex-col">
+    <div className="h-screen  flex flex-col">
       {/* New Chat Button */}
       
 
@@ -50,13 +50,13 @@ function Sidebar() {
             onClick={() => handleSelectChat(item.id)}
             className={`w-full text-left p-3 rounded-lg mb-2 transition-colors duration-150 ${
               item.isActive
-                ? 'bg-blue-100 text-gray-900 '
-                : 'hover:bg-gray-100 text-gray-700'
+                ? ' text-gray-900 '
+                : 'hover:base-100 text-gray-700'
             }`}
           >
             <div className="flex items-start gap-3">
               {/* Avatar */}
-              <div className="avatar placeholder flex-shrink-0">
+              <div className="avatar placeholder shrink-0">
                 <div className="bg-white text-gray-700 w-10 h-10 rounded-full font-semibold text-sm flex items-center justify-center">
                   <span>{item.title.charAt(0).toUpperCase()}</span>
                 </div>
@@ -69,7 +69,7 @@ function Sidebar() {
                     {item.title}
                   </span>
                   {item.unreadCount > 0 && (
-                    <span className="badge badge-sm bg-red-500 text-white border-none flex-shrink-0">
+                    <span className="badge badge-sm bg-red-500 text-white border-none shrink-0">
                       {item.unreadCount}
                     </span>
                   )}
@@ -78,7 +78,7 @@ function Sidebar() {
                   <span className="text-xs text-gray-600 truncate">
                     {item.subtitle}
                   </span>
-                  <span className="text-xs text-gray-500 flex-shrink-0">
+                  <span className="text-xs text-gray-500 shrink-0">
                     {item.date}
                   </span>
                 </div>

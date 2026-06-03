@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'; // Fixed: Imported Route component
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -6,21 +6,11 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import ProtectedRoutes from './components/ProtectedRoutes';
-
+import Settings from './pages/settings';
+import { ThemeContext} from './contexts/Theme.context.jsx';
 
 function App() {
-  ;
-  
-  // 1. Initialize theme configuration from local storage
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('theme') || 'light';
-  });
-
-  // 2. Synchronize DOM element with the state whenever theme changes
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+  const { theme } = useContext(ThemeContext);
 
   return (
     <BrowserRouter>
@@ -30,14 +20,15 @@ function App() {
       */}
       <div data-theme={theme} >
         
-        {/* Pass theme variables to the Navbar so your button switcher works there */}
-        <Navbar theme={theme} setTheme={setTheme} />
+        {/* Pass theme variables to the Navbar through ThemeContext */}
+        <Navbar />
         
         <Routes>
           <Route path="/" element={<ProtectedRoutes><Home /></ProtectedRoutes>} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<ProtectedRoutes><Profile /></ProtectedRoutes>} />
+          <Route path="/settings" element={<ProtectedRoutes><Settings /></ProtectedRoutes>} />
         </Routes>
 
       </div>
