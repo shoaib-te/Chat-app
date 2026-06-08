@@ -4,13 +4,13 @@ import Chatbox from '../components/Chatbox'
 
 function Home() {
   return (
-    <div className=" flex">
-      <aside className="w-80 hidden md:block">
+    <div className=" grid grid-cols-2 h-screen">
+      <aside className=" hidden md:block">
         <Sidebar />
       </aside>
 
-      <main className="flex-1 bg-base-200 p-4">
-        <div className="max-w-4xl mx-auto">
+      <main className="flex bg-base-200 ">
+        <div className=" flex-1 ">
           <Chatbox />
         </div>
       </main>

@@ -1,112 +1,131 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useContext, useState } from 'react';
+import assets, { userDummyData, messagesDummyData } from '../assets/assets'; // Added messagesDummyData import
+import { AuthContext } from '../contexts/Auth.context';
+import { Dategenreate } from '../lib/genreateDate';
+import { ImageMinus } from 'lucide-react';
+function ChatContainer() {
+  const { selectedUser } = useContext(AuthContext);
+  const [input, setInput] = useState("");
 
-function Chatbox() {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      author: "Obi-Wan Kenobi",
-      avatar: "https://img.daisyui.com/images/profile/demo/kenobee@192.webp",
-      time: "12:45",
-      text: "You were the Chosen One!",
-      side: "start",
-      status: "Delivered",
-    },
-    {
-      id: 2,
-      author: "Anakin",
-      avatar: "https://img.daisyui.com/images/profile/demo/anakeen@192.webp",
-      time: "12:46",
-      text: "I hate you!",
-      side: "end",
-      status: "Seen at 12:46",
-    },
-  ]);
-  const [text, setText] = useState("");
-  const listRef = useRef(null);
+  // 1. Safe search: added optional chaining (?._id)
+  const selectedChat = userDummyData.find((user) => user._id === selectedUser?._id);
 
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
-    }
-  }, [messages]);
+  const handleInput = (e) => {
+    setInput(e.target.value);
+  };
 
-  const sendMessage = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    const trimmed = text.trim();
-    if (!trimmed) return;
-
-    const now = new Date();
-    const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-    const outgoing = {
-      id: Date.now(),
-      author: "You",
-      avatar: "https://img.daisyui.com/static/examples/avatar-2.png",
-      time,
-      text: trimmed,
-      side: "end",
-      status: "Sent",
-    };
-
-    setMessages((prev) => [...prev, outgoing]);
-    setText("");
-
-    // optional: simulate a short reply for demo purposes
-    setTimeout(() => {
-      const replyTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      const reply = {
-        id: Date.now() + 1,
-        author: "Anakin",
-        avatar: "https://img.daisyui.com/images/profile/demo/anakeen@192.webp",
-        time: replyTime,
-        text: "...",
-        side: "start",
-        status: "Seen at " + replyTime,
-      };
-      setMessages((prev) => [...prev, reply]);
-    }, 700);
+    if (!input.trim()) return;
+    
+    console.log("Sending message:", input);
+    setInput(""); 
   };
 
   return (
-    <div className="flex flex-col h-full w-full  ">
-      {/* Chat Messages Container */}
-      <div ref={listRef} className="flex-1 flex flex-col overflow-y-auto mb-4 space-y-4" aria-live="polite">
-        {messages.map((m) => (
-          <div key={m.id} className={`chat ${m.side === "start" ? "chat-start" : "chat-end"}`}>
-            <div className="chat-image avatar">
-              <div className="w-10 rounded-full">
-                <img alt={m.author} src={m.avatar} />
+    <>
+      {selectedChat ? (
+        <div className="flex flex-col flex-1 bg-base-200 h-full shadow-lg overflow-hidden border-l border-base-300">
+          
+          {/* Chat Header */}
+          <div className="h-16 border-b border-base-300 flex items-center px-6 justify-between bg-base-100/95 backdrop-blur-sm z-10">
+            <div className="flex items-center gap-3">
+              <img 
+                src={selectedChat.profilePic} 
+                alt={selectedChat.fullName} 
+                className="w-10 h-10 rounded-full object-cover border-2 border-primary/20 shadow-sm"
+              />
+              <div>
+                <h3 className="text-sm font-bold text-base-content leading-tight">{selectedChat.fullName}</h3>
+                <div className="flex items-center gap-1.5">
+                  <span className={`w-2 h-2 rounded-full ${selectedChat.online ? 'bg-success' : 'bg-base-300'}`}></span>
+                  <span className="text-[11px] text-base-content/60 font-medium">{selectedChat.online ? 'Online' : 'Offline'}</span>
+                </div>
               </div>
             </div>
-            <div className="chat-header">
-              {m.author}
-              <time className="text-xs opacity-50 ml-1">{m.time}</time>
-            </div>
-            <div className={`chat-bubble ${m.side === "start" ? "chat-bubble-primary" : "chat-bubble-secondary"}`}>
-              {m.text}
-            </div>
-            <div className="chat-footer opacity-50">{m.status}</div>
           </div>
-        ))}
-      </div>
 
-      {/* Chat Input Bar */}
-      <form onSubmit={sendMessage} className="join justify-center items-center  w-2xl flex absolute bottom-3 gap-2" aria-label="Send message">
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          type="text"
-          placeholder="Type here"
-          className="input join-item w-3xl"
-          aria-label="Message input"
-        />
-        <button type="submit" className="btn btn-primary join-item">
-          Send
-        </button>
-      </form>
-    </div>
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-base-200">
+            {messagesDummyData.map((msg) => (
+              <div key={msg._id} className={`flex ${msg.senderId === "680f50e4f10f3cd28382ecf9" ? "justify-end" : "justify-start"}`}>
+                <div className="max-w-[75%] flex flex-col">
+                  {msg.senderId !== "680f50e4f10f3cd28382ecf9" && (
+                    <div className=' flex flex-row  items-center'>
+                      <div className=' flex justify-center overflow-hidden h-10 w-10  rounded-full'>
+                        <img src={selectedChat.profilePic} alt="" />
+                      </div>
+                       <p className="text-[11px] font-bold text-primary ml-1 mb-1 uppercase tracking-wider">{selectedChat.fullName}</p>
+                    </div>
+                   
+                  )}
+                  
+                  <div className={`px-4 py-3 text-sm shadow-sm ${
+                    msg.senderId === "680f50e4f10f3cd28382ecf9" 
+                    ? "bg-primary text-primary-content rounded-2xl rounded-tr-none" 
+                    : "bg-base-100 text-base-content border border-base-300 rounded-2xl rounded-tl-none"
+                  }`}>
+                    {msg.image? (
+                      <div className="mb-2 rounded-lg overflow-hidden">
+                        <img src={msg.image} alt="Shared" className="w-full max-w-[280px] h-auto object-cover" />
+                      </div>
+                    ):(
+                     <p className="leading-relaxed">{msg.text || msg.textAfter}</p>  
+                    )}
+                   
+                  </div>
+
+                  <div className={`flex items-center gap-1 mt-1.5 text-[10px] text-base-content/50 ${msg.senderId === "680f50e4f10f3cd28382ecf9" ? "justify-end" : "justify-start"}`}>
+                    <span>{Dategenreate(msg.createdAt)}</span>
+                    {msg.senderId === "680f50e4f10f3cd28382ecf9" && (
+                      <div>
+                         <span className={msg.read ? "text-primary-content font-bold" : "text-base-content/80"}>✓✓</span>
+                      </div>
+                     
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Input Area */}
+          <div className="p-4 bg-base-100 border-t border-base-300">
+            <form onSubmit={handleSubmit} className="flex items-center gap-3">
+              <div className="flex-1 bg-base-200 rounded-2xl px-4 py-2.5 flex items-center focus-within:bg-base-100 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+                <input 
+                  value={input}
+                  onChange={handleInput}
+                  type="text" 
+                  placeholder="Write your message..." 
+                  className="flex-1 bg-transparent text-sm outline-none text-base-content"
+                />
+              </div>
+              <div>
+                <label className=' cursor-pointer' htmlFor="image"> <ImageMinus/></label>
+                <input type="file" name="" placeholder='image' hidden id="image" />
+              </div>
+              <button 
+                type="submit" 
+                className="w-10 h-10 btn btn-primary rounded-xl flex items-center justify-center text-primary-content shadow-md transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!input.trim()}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              </button>
+            </form>
+          </div>
+        </div>
+      ) : (
+        /* Empty State */
+        <div className='flex-1 justify-center items-center bg-base-200 flex flex-col h-full shadow-lg border-l border-base-300'>
+          <div className="text-center animate-pulse">
+            <img src={assets.logo} className='' alt="Logo" />
+            <p className="text-base-content/60 font-medium">Choose a chat to start messaging</p>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
-export default Chatbox;
+export default ChatContainer;

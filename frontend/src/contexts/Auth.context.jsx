@@ -8,6 +8,11 @@ const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [searchFilter, setSearchFilter] = useState('');
+  
+  
 
   useEffect(() => {
     const refreshUser = async () => {
@@ -111,6 +116,12 @@ const AuthProvider = ({ children }) => {
     login,
     logout,
     updateProfile,
+    selectedUser,
+    setSelectedUser,
+    filteredUsers,
+    setFilteredUsers,
+    searchFilter,
+    setSearchFilter,
   };
 
   return (

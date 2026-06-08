@@ -55,12 +55,11 @@ export const getMessagecontroller = async (req, res) => {
 export const sendMessagecontroller = async (req, res) => {
   try {
     const myid = req.user.id;
-    const receiverId = req.params.Id;
-    const { content,image } = req.body;
+    const receiverId = req.params.id;
+    const { content, image } = req.body;
     let imageUrl = null;
     if (image) {
-      imageUrl = uploadImage(image); // Implement this function to handle image upload and return the URL
-        
+      imageUrl = await uploadImage(image); // Upload image and return the URL
     }
     const newMessage = new Message({
       sender: myid,

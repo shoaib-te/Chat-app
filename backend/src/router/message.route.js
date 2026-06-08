@@ -7,22 +7,18 @@ const router = express.Router();
     * @desc Get messages for a user
     * @access Private
 */
-router.get("/user",authmiddleware, getUserMessagescontroller
-);
+router.get("/user", authmiddleware, getUserMessagescontroller);
+
 /*  * @route GET /api/message/:id
     * @desc Get a message
     * @access Private
 */
 router.get("/:id", authmiddleware, getMessagecontroller);
 
-
-
-/*  -* @route POST /api/message/send
-    -* @desc Send a message
-   - * @access Private
+/*  * @route POST /api/message/send/:id
+    * @desc Send a message
+    * @access Private
 */
-router.post("/send/:Id", authmiddleware, sendMessagecontroller);
-
-
+router.post("/send/:id", authmiddleware, sendMessagecontroller);
 
 export default router;
