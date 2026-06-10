@@ -1,59 +1,95 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useEffect, useState } from "react";
 import * as authService from "../services/auth.service.js";
+import { io } from "socket.io-client";
 
-// 1. Create and export the Auth Context
 const AuthContext = createContext(null);
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [filteredUsers, setFilteredUsers] = useState([]);
-  const [searchFilter, setSearchFilter] = useState('');
-  
-  
+  const [searchFilter, setSearchFilter] = useState("");
+  const [onlineUser, setonlineUser] = useState([]);
+  const [Sockit, setSockit] = useState(null);
+
+  const backendurl = import.meta.env.VITE_API_URL;
+
+  const Sockitconnect = (userId) => {
+    if (!userId) return;
+    if (Sockit?.connected) return;
+
+    const newSockit = io(backendurl, {
+      query: { userid: userId._id },
+    });
+
+    newSockit.connect();
+    setSockit(newSockit);
+
+    newSockit.on("getonlineuser", (userIds) => {
+      setonlineUser(userIds);
+    });
+  };
 
   useEffect(() => {
+    let isMounted = true;
+
     const refreshUser = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // REMOVED: if(!user) { return }
-        // We WANT to fetch the user from the backend if our local state is null.
-        if(user) {
+
+        if (user) {
           setLoading(false);
           return;
         }
-        const response = await authService.API.get('/api/auth/me');
-        setUser(response.data.user);
+
+        const response = await authService.API.get("/api/auth/me");
+        const me = response?.data?.user;
+
+        if (!isMounted) return;
+
+        setUser(me);
+        Sockitconnect(me);
       } catch (err) {
-        // If the user isn't logged in, or token expired, we just keep user as null
-        setUser(null); 
-        // Optional: Only set an error if it's a network issue, not a 401 Unauthorized
-        if (err.response && err.response.status !== 401) {
-          setError(err.message || 'Unable to verify user');
+        if (!isMounted) return;
+        setUser(null);
+
+        if (err?.response && err.response.status !== 401) {
+          setError(err.message || "Unable to verify user");
         }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
-    
+
     refreshUser();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  useEffect(() => {
+    return () => {
+      if (!Sockit) return;
+      try {
+        Sockit.disconnect();
+      } catch {
+        // ignore
+      }
+    };
+  }, [Sockit]);
 
   const register = async ({ name, email, password }) => {
     try {
       setLoading(true);
       setError(null);
       const response = await authService.register({ name, email, password });
-      console.log(response,"and ",{ name, email, password });
-      
       setUser(response?.user ?? null);
       return response;
     } catch (err) {
-      setError(err.message || 'Registration failed');
+      setError(err?.message || "Registration failed");
       throw err;
     } finally {
       setLoading(false);
@@ -65,12 +101,10 @@ const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       const response = await authService.login({ email, password });
-      console.log(response,"and ",{ email, password });
-      
       setUser(response?.user ?? null);
       return response;
     } catch (err) {
-      setError(err.message || 'Login failed');
+      setError(err?.message || "Login failed");
       throw err;
     } finally {
       setLoading(false);
@@ -83,8 +117,10 @@ const AuthProvider = ({ children }) => {
       setError(null);
       await authService.logout();
       setUser(null);
+      setSockit(null);
+      setonlineUser([]);
     } catch (err) {
-      setError(err.message || 'Logout failed');
+      setError(err?.message || "Logout failed");
       throw err;
     } finally {
       setLoading(false);
@@ -94,38 +130,35 @@ const AuthProvider = ({ children }) => {
   const updateProfile = async (payload) => {
     try {
       const response = await authService.updateProfile(payload);
-
       setLoading(true);
       setError(null);
       setUser(response?.user ?? user);
       return response;
     } catch (err) {
-      setError(err.message || 'Profile update failed');
+      setError(err?.message || "Profile update failed");
       throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  const value = {
-    user,
-    loading,
-    error,
-    setError,
-    register,
-    login,
-    logout,
-    updateProfile,
-    selectedUser,
-    setSelectedUser,
-    filteredUsers,
-    setFilteredUsers,
-    searchFilter,
-    setSearchFilter,
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        error,
+        setError,
+        register,
+        login,
+        logout,
+        updateProfile,
+        searchFilter,
+        setSearchFilter,
+        onlineUser,
+        Sockit,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -133,3 +166,4 @@ const AuthProvider = ({ children }) => {
 
 export default AuthProvider;
 export { AuthContext };
+

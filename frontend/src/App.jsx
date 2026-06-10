@@ -6,7 +6,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import ProtectedRoutes from './components/ProtectedRoutes';
-import Settings from './pages/settings';
+import Settings from './pages/Settings';
+
 import { ThemeContext} from './contexts/Theme.context.jsx';
 
 function App() {
@@ -19,9 +20,6 @@ function App() {
         and passes the state tools down to your Navbar 
       */}
       <div data-theme={theme} >
-        
-        {/* Pass theme variables to the Navbar through ThemeContext */}
-        <Navbar />
         
         <Routes>
           <Route path="/" element={<ProtectedRoutes><Home /></ProtectedRoutes>} />
