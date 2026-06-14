@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { AuthContext } from "./Auth.context";
 import {
   getAllUsers,
@@ -9,110 +9,110 @@ import {
 
 const ChatContext = createContext(null);
 
-const ChatProvider = ({ children }) => {
-  // store all message
+export const ChatProvider = ({ children }) => {
   const [message, setmessage] = useState([]);
-  // store all user
   const [user, setuser] = useState([]);
-  // select user id store
-  const [selectedUser, setSelectedUser] = useState(null);
-  // unsent/unread counter map keyed by senderId
+  // FIX 1: Initialised as null because selectedUser represents a single user object, not an array
+  const [selectedUser, setSelectedUser] = useState(null); 
   const [unsendmessage, setunsendmessage] = useState({});
-
-  // auth context file unse sockit and api in axiow
+      
   const backendurl = import.meta.env.VITE_API_URL;
-  const {Sockit} = useContext(AuthContext)||{};
+  const { Sockit } = useContext(AuthContext) || {};
 
-  // all messages router  hooks
-
-  const Alluser = async () => {
+  // 1. Fetch all users on mount
+  const Alluser = useCallback(async () => {
     try {
-      const  data  = await getAllUsers();
-      setuser(data.users);
-      console.log(data.users);
-      console.log(data.UnsendMessage);
+      const data = await getAllUsers();
+      setuser(data.users || []);
       setunsendmessage(data.UnsendMessage || {});
-
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching all users:", error);
     }
-  };
-
-  //get select user messate
-  const selectusermessate = async (userId) => {
-    try {
-      const  data  = await getAllMessages(userId);
-      setmessage(data.message);
-      console.log(data.message);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  // send select user messate
-
-const sendmessagesuser = async (fromdata) => {
-  try {
-    const data = await sendMessage(selectedUser._id, fromdata);
-    console.log("Backend response data:", data);
-    
-    // 1. Safely grab the newly created message object from 'data.data'
-    const newMessage = data?.data; 
-    
-    if (newMessage) {
-      setmessage((prevMessages) => {
-        // 2. Defensive check: Fallback to an empty array if prevMessages isn't an array yet
-        const currentMessages = Array.isArray(prevMessages) ? prevMessages : [];
-        return [...currentMessages, newMessage];
-      });
-    }
-  } catch (error) {
-    console.error("Error sending message:", error);
-  }
-};
-
-  // mark all message
-  const markallmessage = async () => {
-    try {
-      if (!Sockit) return;
-      const handler = (newmessage) => {
-        if (selectedUser && selectedUser._id === newmessage.sender) {
-          selectusermessate(selectedUser._id);
-          return;
-        }
-
-        setunsendmessage((prevunsendmessage) => {
-          const current = prevunsendmessage?.[newmessage.sender] || 0;
-          return {
-            ...prevunsendmessage,
-            [newmessage.sender]: current + 1,
-          };
-        });
-      };
-
-      Sockit.on("newmessage", handler);
-
-
-      const  data  = await markMessage(selectedUser._id);
-
-      console.log(data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  // un subscribe form message
-
-  const unsuberibemessage = () => {
-    if (!Sockit) return;
-    Sockit.off("newmessage");
-  };
-
+  }, []);
 
   useEffect(() => {
-    markallmessage();
-    return () => unsuberibemessage();
-  }, [Sockit,selectedUser ]);
+    void Alluser();
+  }, [Alluser]);
+
+  // 2. Fetch specific user conversation
+  const selectusermessate = useCallback(async (userId) => {
+    if (!userId) return;
+    try {
+      const data = await getAllMessages(userId);
+      setmessage(data.message || []);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
+  }, []);
+
+  // 3. Mark messages as read when a user is selected
+  const markallmessage = useCallback(async (userId) => {
+    if (!userId) return;
+    try {
+      const data = await markMessage(userId);
+      setunsendmessage((prev) => {
+        if (!prev || !(userId in prev)) return prev || {}; // Safety guard
+        const updated = { ...prev };
+        delete updated[userId];
+        return updated;
+      });
+      console.log("Messages marked as read:", data);
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+    }
+  }, []);
+
+  // Sync message fetching and marking read when selected user changes
+  useEffect(() => {
+    // FIX 2: Added optional chaining check for selectedUser._id
+    if (!selectedUser?._id) return; 
+    
+  }, [selectedUser, selectusermessate, markallmessage]);
+
+  // 4. Send Message API call
+  const sendmessagesuser = async (fromdata) => {
+    if (!selectedUser?._id) return;
+    try {
+      const data = await sendMessage(selectedUser._id, fromdata);
+      const newMessage = data?.data;
+      
+      if (newMessage) {
+        setmessage((prevMessages) => [...(Array.isArray(prevMessages) ? prevMessages : []), newMessage]);
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
+  // 5. Global Real-time Socket Event Listener Setup
+  useEffect(() => {
+    if (!Sockit) return;
+
+    const handleIncomingMessage = (newmessage) => {
+      const incomingSenderId = newmessage?.sender != null ? String(newmessage.sender) : null;
+      const activeReceiverId = selectedUser?._id != null ? String(selectedUser._id) : null;
+
+      if (activeReceiverId && incomingSenderId && activeReceiverId === incomingSenderId) {
+        setmessage((prev) => [...prev, newmessage]);
+        markMessage(selectedUser._id).catch(console.error);
+      } else if (incomingSenderId) { // Safety guard to ensure sender ID exists
+        setunsendmessage((prevUnsend) => {
+          const currentCount = prevUnsend?.[incomingSenderId] || 0;
+          return {
+            ...prevUnsend,
+            [incomingSenderId]: currentCount + 1,
+          };
+        });
+      }
+    };
+
+    Sockit.on("newmessage", handleIncomingMessage);
+
+    return () => {
+      Sockit.off("newmessage", handleIncomingMessage);
+    };
+    // FIX 3: Removed 'markMessage' from dependencies since it is an imported static service utility
+  }, [Sockit, selectedUser]); 
 
   const value = {
     message,
@@ -121,8 +121,6 @@ const sendmessagesuser = async (fromdata) => {
     setuser,
     selectedUser,
     setSelectedUser,
-    markallmessage,
-    unsuberibemessage,
     backendurl,
     Sockit,
     unsendmessage,

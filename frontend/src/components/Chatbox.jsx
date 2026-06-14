@@ -13,19 +13,29 @@ function ChatContainer() {
   const { user = null, logout, onlineUser = [] } = useContext(AuthContext) || {};
 
   const [input, setInput] = useState("");
-  const [imageFile, setImageFile] = useState(null); // Stores the raw file for Multer
-  const [imagePreview, setImagePreview] = useState(null); // Stores the UI preview string
+  const [imageFile, setImageFile] = useState(null); 
+  const [imagePreview, setImagePreview] = useState(null); 
   const fileInputRef = useRef(null);
+  
+  // Ref anchor to force auto-scrolling to the latest message
+  const messagesEndRef = useRef(null);
 
+  // Effect 1: Handle Initial Message Loading when switching users
   useEffect(() => {
     if (selectedUser?._id) {
       selectusermessate(selectedUser._id);
     }
-  }, [selectedUser, selectusermessate]);
+  }, [selectedUser?._id, selectusermessate]);
+
+  // Effect 2: Auto Scroll down instantly when a new message appends to the array
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [message]);
 
   const handleInput = (e) => setInput(e.target.value);
 
-  // Updated to work smoothly with Multer backends using modern Object URLs
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file || !file.type.startsWith("image/")) {
@@ -34,12 +44,12 @@ function ChatContainer() {
     }
 
     setImageFile(file);
-    setImagePreview(URL.createObjectURL(file)); // Better performance than FileReader
+    setImagePreview(URL.createObjectURL(file)); 
   };
 
   const removeImage = () => {
     setImageFile(null);
-    if (imagePreview) URL.revokeObjectURL(imagePreview); // Clean up browser memory
+    if (imagePreview) URL.revokeObjectURL(imagePreview); 
     setImagePreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -48,10 +58,9 @@ function ChatContainer() {
     e.preventDefault();
     if (!input.trim() && !imageFile) return;
 
-    // Package data into FormData so Multer can parse it on the backend
     const formData = new FormData();
     if (input.trim()) formData.append("content", input.trim());
-    if (imageFile) formData.append("image", imageFile); // 'image' must match your Multer upload key
+    if (imageFile) formData.append("image", imageFile); 
     
     await sendmessagesuser(formData);
 
@@ -141,7 +150,9 @@ function ChatContainer() {
           <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-base-200">
             {(message || []).map((msg, index) => {
               if (!msg) return null;
-              const isMe = msg?.sender === user?._id;
+              
+              const isMe = String(msg?.sender) === String(user?._id);
+
               
               return (
                 <div key={msg._id || index} className={`flex items-end gap-2 ${isMe ? "justify-end" : "justify-start"}`}>
@@ -161,8 +172,11 @@ function ChatContainer() {
                     )}
 
                     <div className={`px-4 py-2.5 text-sm shadow-sm flex flex-col gap-2 rounded-2xl ${
-                      isMe ? "bg-primary text-primary-content rounded-br-none" : "bg-base-100 text-base-content border border-base-300 rounded-bl-none"
+                      isMe
+                        ? "bg-primary text-primary-content rounded-br-none"
+                        : "bg-base-100 text-base-content border border-base-300 rounded-bl-none"
                     }`}>
+
                       {msg.image && (
                         <div className="rounded-lg overflow-hidden max-w-[260px]">
                           <img src={msg.image} alt="Shared attachment" className="w-full h-auto object-cover max-h-60" />
@@ -185,6 +199,9 @@ function ChatContainer() {
                 </div>
               );
             })}
+            
+            {/* Auto-scroll target element */}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Input Area Container */}

@@ -55,8 +55,7 @@ function Sidebar() {
           filterResponse.map((chat) => {
             // Corrected to match the exact context state variable names
             const isSelected = selectedUser?._id === user._id;
-            
-
+ 
 
             return (
               <div 
@@ -64,7 +63,7 @@ function Sidebar() {
                 className={`flex items-center gap-4 p-4 cursor-pointer transition-all duration-200 ${
                   selectedUser?._id === chat._id 
                     ? 'bg-purple-50/80 border-l-4 border-purple-500' 
-                    : 'hover:bg-gray-50 border-l-4 border-transparent'
+                    : 'hover:bg-gray-800 border-l-4 border-transparent'
                 }`} 
                 onClick={() => setSelectedUser(chat)}
               >
@@ -89,11 +88,14 @@ function Sidebar() {
                   
                   <div className="flex items-center justify-between gap-2">
                    
-                    {unsendmessage > 0 && (
-                      <span className="flex-shrink-0 text-black text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full">
-                        {unsendmessage.length()}
-                      </span>
-                    )}
+                    {(() => {
+                      const unreadCount = unsendmessage?.[chat._id] || 0;
+                      return unreadCount > 0 ? (
+                        <span className="flex-shrink-0 text-black text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full">
+                          {unreadCount}
+                        </span>
+                      ) : null;
+                    })()}
                   </div>
                 </div>
               </div>

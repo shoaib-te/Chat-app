@@ -19,6 +19,7 @@ app.use(cors({
 }));
 app.use(morgan("dev"));
 app.use(cookieParser());
+
 //* Connect to database */
 import connectDB from "./src/config/db.js";
 connectDB();
@@ -34,12 +35,21 @@ export const io = new Server(server, {
 // sall online use store
 export const usersocketid= {};
 
-
+io.use((socket, next) => {
+  // client-side
+socket.on("connect_error", (err) => {
+  console.log(err.message); // prints the message associated with the error
+});
+  next();
+});
 io.on("connection", (socket) => {
+
+    
     console.log(`User connected: ${socket.id}`);
 // give me all user sockit id
     const userid=socket.handshake.query.userId;
-
+     console.log('useridsocket .handshake. query .userId',userid);
+     
 // add to all user id in usersockitid store in key :valu
     if(userid) usersocketid[userid]=socket.id;
     console.log(usersocketid);

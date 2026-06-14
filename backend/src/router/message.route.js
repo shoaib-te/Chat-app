@@ -16,11 +16,11 @@ router.get("/user", authmiddleware, getUserMessagescontroller);
 */
 router.get("/:id", authmiddleware, getMessagecontroller);
 
-/*  * @route PUT /api/message/:id
+/*  * @route PUT /api/message/mark:id
     * @desc Update a message
     * @access Private
 */
-router.put("mark/:id", authmiddleware, markMessagecontroller);
+router.put("/mark/:id", authmiddleware, markMessagecontroller);
 
 
 /*  * @route POST /api/message/send/:id

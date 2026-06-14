@@ -11,22 +11,32 @@ const AuthProvider = ({ children }) => {
   const [searchFilter, setSearchFilter] = useState("");
   const [onlineUser, setonlineUser] = useState([]);
   const [Sockit, setSockit] = useState(null);
-
+ console.log('line 14 socket',onlineUser);
   const backendurl = import.meta.env.VITE_API_URL;
 
   const Sockitconnect = (userId) => {
+    
+    
     if (!userId) return;
     if (Sockit?.connected) return;
 
     const newSockit = io(backendurl, {
-      query: { userid: userId._id },
+      query: { 
+         userId: userId,
+         },
     });
 
     newSockit.connect();
+   ;
+    
     setSockit(newSockit);
 
     newSockit.on("getonlineuser", (userIds) => {
+     console.log(userIds,'userids');
+     
       setonlineUser(userIds);
+      
+      
     });
   };
 
@@ -45,11 +55,12 @@ const AuthProvider = ({ children }) => {
 
         const response = await authService.API.get("/api/auth/me");
         const me = response?.data?.user;
-
+        
+        
         if (!isMounted) return;
 
         setUser(me);
-        Sockitconnect(me);
+        Sockitconnect(me._id);
       } catch (err) {
         if (!isMounted) return;
         setUser(null);

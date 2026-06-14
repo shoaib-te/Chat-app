@@ -49,3 +49,4 @@ export const markMessage = async (messageId) => {
     handleError(error);
   }
 };
+
