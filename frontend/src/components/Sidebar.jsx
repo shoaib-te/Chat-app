@@ -14,10 +14,8 @@ function Sidebar() {
 
   // Automatically fetch users list from API when component mounts
   useEffect(() => {
-   
-      Alluser();
-    
-  }, [onlineUser]);
+    Alluser();
+  }, [Alluser]);
 
   // Connected the filter function to the 'user' array pulled from context
   const filterResponse = input?user.filter((currUser) => 

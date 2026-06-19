@@ -9,7 +9,7 @@ function Navbar() {
   const { theme = 'light', toggleTheme } = useContext(ThemeContext) || {};
   const { user = null, logout } = useContext(AuthContext) || {};
 
-  const handleLogoutClick = (e) => {
+  const handleLogoutClick = () => {
     // Blur active element to cleanly dismiss the DaisyUI dropdown overlay container menu on click
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();

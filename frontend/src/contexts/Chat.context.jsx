@@ -31,7 +31,7 @@ export const ChatProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    void Alluser();
+    Alluser();
   }, [Alluser]);
 
   // 2. Fetch specific user conversation

@@ -19,13 +19,16 @@ function Profile() {
 
   // Sync state if user data loads late from AuthContext
   useEffect(() => {
-    if (user) {
+    if (!user) return;
+
+    // Defer the state update to avoid cascading-render warnings
+    queueMicrotask(() => {
       setFormData({
         username: user.name || "",
         email: user.email || "",
         profilePicture: user.profilePicture || "",
       });
-    }
+    });
   }, [user]);
 
   const handleChange = (e) => {
