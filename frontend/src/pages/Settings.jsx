@@ -1,7 +1,10 @@
 import React, { useContext } from 'react';
 import { ThemeContext } from '../contexts/Theme.context';
+import { useNavigate } from 'react-router-dom';
+import { FiX } from 'react-icons/fi';
 
 function Settings() {
+  
     const { theme, setTheme } = useContext(ThemeContext); // Access theme context for toggling;
   // Available themes matching the design image grid
   const themes = [
@@ -41,14 +44,26 @@ function Settings() {
 
   // Set the default active theme
   ;
+  const navigate = useNavigate();
 
   return (
     <div className="p-8 max-w-6xl mx-auto font-sans text-base-content bg-base-100 min-h-screen">
       {/* Theme Section Header */}
-      <div className="mb-6">
-        <h2 className="text-lg font-bold">Theme</h2>
-        <p className="text-sm text-gray-500">Choose a theme for your chat interface</p>
-      </div>
+     <div className="flex justify-between items-start gap-4">
+  <div>
+    <h2 className="text-lg font-bold">Theme</h2>
+    <p className="text-sm text-gray-500">Choose a theme for your chat interface</p>
+  </div>
+  <div>
+    <button
+      onClick={() => navigate("/")}
+      className="btn btn-ghost btn-square text-base-content hover:bg-base-content/10"
+      title="Go Home"
+    >
+      <FiX className="h-5 w-5" />
+    </button>
+  </div>
+</div>
 
       {/* Responsive Theme Color Swatches Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mb-10">

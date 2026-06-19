@@ -1,26 +1,92 @@
 import UserModule from "../module/User.module.js";
 import Message from "../module/Message.module.js";
+import { usersocketid ,io} from "../../index.js";
+import uploadImage from "../lib/Cloudinary.js";
+
 
 
 /*    * @route GET /api/message/user
     * @desc Get messages for a user
     * @access Private
 */
+// export const getUserMessagescontroller = async (req, res) => {
+//     const userId = req.user.id;
+//     console.log(userId);
+    
+//     try {
+//         const filteruser= await UserModule.find({_id: {$ne: userId}}).select("-password");
+//         if(!filteruser||filteruser.length === 0){    
+//             return res.status(404).json({ message: "No users found" });
+//         }
+//        /* un send message in user */
+//         const UnsendMessage={}
+
+//         const promises = await filteruser.map(async (user) => {
+//             const lastMessage = await Message.findOne({
+//                sender:user._id , receiver: userId,seen:false
+//             })
+//             if(lastMessage > 0){
+//                 UnsendMessage[user._id] = lastMessage.length; 
+//             }
+
+//         });
+//         await Promise.all(promises);
+
+
+
+//         res.status(200).json({
+//             message: "Users found",
+//             users: filteruser,
+//             UnsendMessage:UnsendMessage
+//         });
+//     } catch (error) {
+//         console.log(error);
+//         res.status(500).json({ message: "Internal server error" });
+        
+//     }
+// }
 export const getUserMessagescontroller = async (req, res) => {
     const userId = req.user.id;
+    console.log("Current User ID:", userId);
+    
     try {
-        const filteruser= await UserModule.find({_id: {$ne: userId}}).select("-password");
-        if(!filteruser){    
+        // 1. Fetch all other users
+        const filteruser = await UserModule.find({ _id: { $ne: userId } }).select("-password");
+        
+        if (!filteruser || filteruser.length === 0) {    
             return res.status(404).json({ message: "No users found" });
         }
-        res.status(200).json({
-            message: "Users found",
-            users: filteruser
+
+        const UnsendMessage = {};
+
+        // 2. Map through users and get the count of unseen messages
+        const promises = filteruser.map(async (user) => {
+            // Use countDocuments instead of findOne to get the actual total
+            const unreadCount = await Message.countDocuments({
+                sender: user._id, 
+                receiver: userId,
+                seen: false
+            });
+
+            // Only add to the object if there are actually unread messages
+            if (unreadCount > 0) {
+                UnsendMessage[user._id] = unreadCount;
+            }
         });
+
+        // 3. Wait for all database count queries to finish
+        await Promise.all(promises);
+
+        // 4. Return response
+        return res.status(200).json({
+            message: "Users found",
+            users: filteruser,
+            UnsendMessage: UnsendMessage
+        });
+
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error" });
-        
+        console.error("Error in getUserMessagescontroller:", error);
+        return res.status(500).json({ message: "Internal server error" });
     }
 }
 /*  * @route GET /api/message/:id
@@ -38,9 +104,17 @@ export const getMessagecontroller = async (req, res) => {
                 { sender: receiverId, receiver: myid }
             ]
         });
-        res.status(200).json(
-            message
-        )
+
+        await Message.updateMany({
+            sender: receiverId,
+            receiver:myid ,
+        }, {
+            $set: { seen: true }
+        })
+        res.status(200).json({
+            message: "Message found",
+             message
+       } )
         
     } catch (error) {
         console.log(error);
@@ -48,6 +122,31 @@ export const getMessagecontroller = async (req, res) => {
         
     }
 };
+/*  * @route PUT /api/message/:id
+    * @desc Update a message
+    * @access Private
+*/
+export const markMessagecontroller= async (req, res) => {
+    const { id } = req.params;
+      console.log('markmessage',id);
+      
+    try {
+      const message = await Message.findByIdAndUpdate(
+        id,
+        { seen: true },
+        { returnDocument: 'after' }
+      );
+      if (!message) {
+        return res.status(404).json({ message: "Message not found" });
+      }
+      res.status(200).json({ success: true, message: "Message marked as seen" });
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error" });
+        
+    }
+}
 /*  * @route POST /api/message/send
     * @desc Send a message
     * @access Private
@@ -56,7 +155,12 @@ export const sendMessagecontroller = async (req, res) => {
   try {
     const myid = req.user.id;
     const receiverId = req.params.id;
-    const { content, image } = req.body;
+    const { content } = req.body;
+    const image = req.file;
+  console.log(image,'image for chat');
+  
+
+    
     let imageUrl = null;
     if (image) {
       imageUrl = await uploadImage(image); // Upload image and return the URL
@@ -67,7 +171,13 @@ export const sendMessagecontroller = async (req, res) => {
         content,
         image: imageUrl
     });
+
     await newMessage.save();
+
+    const receiverSockitid=usersocketid[receiverId];
+    if(receiverSockitid){
+        io.to(receiverSockitid).emit("newmessage", newMessage)
+    }
     res.status(201).json({
       message: "Message sent successfully",
       data: newMessage
